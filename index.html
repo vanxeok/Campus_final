@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>캠퍼스 데일리 (Campus Daily) - 대학생 정보 큐레이션</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased">
+
+    <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-md">
+        <div class="mx-auto flex max-w-7xl items-center justify-between p-4">
+            <div class="flex items-center space-x-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-500/30">
+                    <i class="fa-solid fa-graduation-cap text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-slate-900">Campus Daily</h1>
+                    <p class="text-xs text-slate-500">n8n 기반 자동화 데이터 큐레이션 허브</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                    <span class="mr-1 h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    매일 아침 08:00 자동 갱신
+                </span>
+                <button onclick="fetchData()" class="rounded-lg bg-slate-100 p-2 text-slate-600 hover:bg-slate-200 transition">
+                    <i class="fa-solid fa-rotate text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="mx-auto max-w-7xl p-4 md:p-6 lg:p-8 space-y-8">
+        
+        <div id="loading" class="flex flex-col items-center justify-center py-20 space-y-4">
+            <div class="h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+            <p class="text-sm font-medium text-slate-500">n8n 파이프라인에서 최신 데이터를 긁어오는 중...</p>
+        </div>
+
+        <div id="dashboard" class="hidden grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            
+            <div class="flex flex-col space-y-4">
+                <div class="flex items-center space-x-2 border-b border-slate-200 pb-2">
+                    <i class="fa-solid fa-landmark text-blue-600 text-lg"></i>
+                    <h2 class="text-lg font-bold text-slate-900">청년·복지 정책</h2>
+                </div>
+                <div id="policy-list" class="space-y-4 flex-1">
+                    </div>
+            </div>
+
+            <div class="flex flex-col space-y-4">
+                <div class="flex items-center space-x-2 border-b border-slate-200 pb-2">
+                    <i class="fa-solid fa-wallet text-amber-500 text-lg"></i>
+                    <h2 class="text-lg font-bold text-slate-900">대학생 꿀알바</h2>
+                </div>
+                <div id="job-list" class="space-y-4 flex-1">
+                    </div>
+            </div>
+
+            <div class="flex flex-col space-y-4">
+                <div class="flex items-center space-x-2 border-b border-slate-200 pb-2">
+                    <i class="fa-solid fa-trophy text-emerald-500 text-lg"></i>
+                    <h2 class="text-lg font-bold text-slate-900">대외활동 & 공모전</h2>
+                </div>
+                <div id="activity-list" class="space-y-4 flex-1">
+                    </div>
+            </div>
+
+            <div class="flex flex-col space-y-4">
+                <div class="flex items-center space-x-2 border-b border-slate-200 pb-2">
+                    <i class="fa-solid fa-map-location-dot text-indigo-500 text-lg"></i>
+                    <h2 class="text-lg font-bold text-slate-900">트렌드 & 지역축제</h2>
+                </div>
+                <div id="festival-list" class="space-y-4 flex-1">
+                    </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // 🔗 n8n의 마지막 Webhook URL 주소 입력 (테스트 시 Test URL 사용 권장)
+        // 만약 로컬 서버나 특정 서버가 아직 구축되지 않았다면 더미 데이터를 반환하도록 설계해 둠
+        const N8N_WEBHOOK_URL = 'https://반석님의-n8n-도메인/webhook-test/campus-daily';
+
+        async function fetchData() {
+            const loadingEl = document.getElementById('loading');
+            const dashboardEl = document.getElementById('dashboard');
+            
+            loadingEl.classList.remove('hidden');
+            dashboardEl.classList.add('hidden');
+
+            try {
+                // n8n API 호출 시도 (네트워크 에러나 주소가 비어있을 경우 아래 catch 블록의 더미 데이터로 대체됨)
+                const response = await fetch(N8N_WEBHOOK_URL);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                renderData(data);
+            } catch (error) {
+                console.warn('n8n 연결 실패 또는 주소 미기입으로 데모용 시연 모드(Mock Data)를 활성화합니다.', error);
+                
+                // 💡 오늘 발표 시연 킬러용 고퀄리티 더미 데이터 (n8n 가공 포맷과 100% 동일)
+                const mockData = {
+                    policies: [
+                        { title: "[국토부] 2026 청년월세 특별지원 사업 (월 20만원 무상 지원)", link: "https://www.youthcenter.go.kr", date: "2026-05-23" },
+                        { title: "[한국장학재단] 학자금 대출 이자 지자체 전액 지원 고시", link: "https://www.kosaf.go.kr", date: "2026-05-22" },
+                        { title: "[금융위] 청년도약계좌 5월 우대 금리 및 가입 조건 완화", link: "https://www.fsc.go.kr", date: "2026-05-20" }
+                    ],
+                    part_time_jobs: [
+                        { title: "[주말단기] 구청 주관 대형 박람회 운영 스태프 모집", company: "OO 기획", pay: "시급 11,500원", link: "#" },
+                        { title: "[재택/단기] 대학생 대상 AI 학습용 데이터 라벨링 알바", company: "데이터테크", pay: "건당 500원", link: "#" },
+                        { title: "[국가근로] 2학기 교내 도서관 및 행정실 근로 장학생 모집", company: "대학교 학사처", pay: "시급 9,860원", link: "#" }
+                    ],
+                    activities: [
+                        { title: "제15기 네이버 클라우드 대학생 앰배서더 서포터즈", target: "전국 대학생", reward: "서류 면제 및 활동비", deadline: "D-5", link: "#" },
+                        { title: "2026 상반기 공공 데이터 활용 청년 혁신 해커톤 공모전", target: "재학생 및 휴학생", reward: "총 상금 1,000만원", deadline: "D-12", link: "#" },
+                        { title: "전국 연합 IT 컴공 동아리 SOPT 36기 개발자 파트 모집", target: "IT 관심 대학생", reward: "기업 연계 프로젝트", deadline: "D-3", link: "#" }
+                    ],
+                    festivals: [
+                        { title: "2026 센텀 비어 페스티벌 (대학생 신분증 지참 시 할인)", location: "영화의전당 광장", date: "06.01 - 06.05", link: "#" },
+                        { title: "광안리 어방축제 뮤직 드론쇼 연계 청년 버스킹 페스타", location: "광안리 해변가", date: "05.29 - 05.31", link: "#" },
+                        { title: "[전시] 국립현대미술관 특별전 대학생 학생증 무료 입장 이벤트", location: "시립미술관 본관", date: "상시 진행", link: "#" }
+                    ]
+                };
+                renderData(mockData);
+            } finally {
+                loadingEl.classList.add('hidden');
+                dashboardEl.classList.remove('hidden');
+            }
+        }
+
+        function renderData(data) {
+            // 1. 청년 정책 렌더링
+            const policyContainer = document.getElementById('policy-list');
+            policyContainer.innerHTML = data.policies.map(p => `
+                <a href="${p.link}" target="_blank" class="block rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-blue-500 hover:shadow-md transition flex flex-col justify-between h-32">
+                    <h3 class="font-semibold text-slate-900 line-clamp-2 text-sm leading-snug">${p.title}</h3>
+                    <span class="text-xs text-slate-400 mt-2"><i class="fa-regular fa-calendar-check mr-1"></i>${p.date}</span>
+                </a>
+            `).join('');
+
+            // 2. 꿀알바 렌더링
+            const jobContainer = document.getElementById('job-list');
+            jobContainer.innerHTML = data.part_time_jobs.map(j => `
+                <a href="${j.link}" target="_blank" class="block rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-amber-500 hover:shadow-md transition flex flex-col justify-between h-32">
+                    <div>
+                        <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">${j.company}</span>
+                        <h3 class="font-semibold text-slate-900 line-clamp-1 text-sm mt-1">${j.title}</h3>
+                    </div>
+                    <span class="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded w-fit"><i class="fa-solid fa-coins mr-1 text-amber-500"></i>${j.pay}</span>
+                </a>
+            `).join('');
+
+            // 3. 대외활동 렌더링
+            const activityContainer = document.getElementById('activity-list');
+            activityContainer.innerHTML = data.activities.map(a => `
+                <a href="${a.link}" target="_blank" class="block rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-emerald-500 hover:shadow-md transition flex flex-col justify-between h-32">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <span class="text-[10px] font-semibold text-slate-500">${a.target}</span>
+                            <span class="text-[10px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-full">${a.deadline}</span>
+                        </div>
+                        <h3 class="font-semibold text-slate-900 line-clamp-1 text-sm mt-1">${a.title}</h3>
+                        <p class="text-xs text-slate-500 line-clamp-1 mt-0.5">${a.reward}</p>
+                    </div>
+                </a>
+            `).join('');
+
+            // 4. 여가 축제 렌더링
+            const festivalContainer = document.getElementById('festival-list');
+            festivalContainer.innerHTML = data.festivals.map(f => `
+                <a href="${f.link}" target="_blank" class="block rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-indigo-500 hover:shadow-md transition flex flex-col justify-between h-32">
+                    <h3 class="font-semibold text-slate-900 line-clamp-2 text-sm leading-snug">${f.title}</h3>
+                    <div class="text-[11px] text-slate-500 mt-2 space-y-0.5">
+                        <div><i class="fa-solid fa-location-dot text-slate-400 mr-1"></i>${f.location}</div>
+                        <div><i class="fa-solid fa-calendar-days text-slate-400 mr-1"></i>${f.date}</div>
+                    </div>
+                </a>
+            `).join('');
+        }
+
+        // 페이지 최초 로드 시 실행
+        window.onload = fetchData;
+    </script>
+</body>
+</html>
