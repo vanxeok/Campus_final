@@ -83,8 +83,8 @@
     <script>
         // 🔗 n8n의 마지막 Webhook URL 주소 입력 (테스트 시 Test URL 사용 권장)
         // 만약 로컬 서버나 특정 서버가 아직 구축되지 않았다면 더미 데이터를 반환하도록 설계해 둠
-        const N8N_WEBHOOK_URL = https://ky06ykoo49.app.n8n.cloud/webhook-test/campus_daily;
-
+        // ⚠️ 반드시 양쪽에 작은따옴표(' ')가 감싸져 있어야 하고, 주소 앞에 공백이 없어야 합니다!
+        const N8N_WEBHOOK_URL = 'https://ky06ykoo49.app.n8n.cloud/webhook-test/campus_daily';
         async function fetchData() {
             const loadingEl = document.getElementById('loading');
             const dashboardEl = document.getElementById('dashboard');
